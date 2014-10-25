@@ -60,6 +60,8 @@ function love.draw()
    for i=1, #players do
       drawPlayer(players[i])
    end
+   
+   drawLifebar()
 end
 
 function love.keypressed(key)
@@ -121,6 +123,16 @@ function loadImages()
       ship = gr.newImage("images/playerShip1_blue.png"),
       shot = gr.newImage("images/laserBlue07.png")
    }
+
+   lifebar = {
+      green = gr.newImage("images/ui/playerLife3_green.png")
+   }
+
+   numbers = {}
+   for i=0, 9 do
+      numbers[i] = gr.newImage("images/ui/numeral" .. i .. ".png")
+   end
+   table.insert(numbers, gr.newImage("images/ui/numeralX.png"))
 end
 
 function drawBackground()
@@ -128,6 +140,18 @@ function drawBackground()
       for y=0, gr.getHeight() / 256 do
 	 gr.draw(background, x * 256, y * 256)
       end
+   end
+end
+
+function drawLifebar()
+   gr.draw(lifebar.green, 10, 10)
+   local hp = tostring(players[1].hp)
+   
+   for i = 1, #hp do
+      local n = tonumber(hp:sub(i,i))
+      gr.draw(numbers[n],
+	      lifebar.green:getWidth() + (15 * i),
+	      10)
    end
 end
 
