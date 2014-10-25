@@ -1,6 +1,11 @@
 function love.load()
    require "setup"
+
+   MENU = 0
+   GAME = 1
+   END = 2
    
+   gameMode = MENU
    players = {}
    ships = {}
 
@@ -49,79 +54,118 @@ function love.load()
 end
 
 function love.update(dt)
-   for i=1, #players do
-      updatePlayer(dt, players[i])
+   if gameMode == MENU then
+      for i=1, #ships do
+	 ships[i].r = ships[i].r + (dt * 1)
+      end
+   elseif gameMode == GAME then
+      for i=1, #players do
+	 updatePlayer(dt, players[i])
+      end
+   elseif gameMode == END then
    end
 end
 
 function love.draw()
    drawBackground()
-   
-   for i=1, #players do
-      drawPlayer(players[i])
+   if gameMode == MENU then
+      drawTitle()
+      drawShips()
+   elseif gameMode == GAME then
+      for i=1, #players do
+	 drawPlayer(players[i])
+      end
+      
+      drawLifebar()
+   elseif gameMode == END then
    end
-   
-   drawLifebar()
 end
 
 function love.keypressed(key)
-   if key == "escape" then
-      love.event.push('quit')
+   if gameMode == MENU then
+      if key == "escape" then
+	 love.event.push('quit')
+      end
+   elseif gameMode == GAME then
+      if key == "escape" then
+	 gameMode = MENU
+      end
+      
+      if key == 'a' then
+	 players[1].toggleLeft = true
+      end
+      
+      if key == 'd' then
+	 players[1].toggleRight = true
+      end
+      
+      if #players < 2 then return end
+      
+      if key == 'left' then
+	 players[2].toggleLeft = true
+      end
+      
+      if key == 'right' then
+	 players[2].toggleRight = true
+      end
+      
+      if #players < 3 then return end
+   elseif gameMode == END then
    end
-
-   if key == 'a' then
-      players[1].toggleLeft = true
-   end
-
-   if key == 'd' then
-      players[1].toggleRight = true
-   end
-   
-   if #players < 2 then return end
-
-   if key == 'left' then
-      players[2].toggleLeft = true
-   end
-   
-   if key == 'right' then
-      players[2].toggleRight = true
-   end
-
-   if #players < 3 then return end
 end
 
 function love.keyreleased(key)
-   if key == 'a' then
-      players[1].toggleLeft = false
+   if gameMode == MENU then
+   elseif gameMode == GAME then
+      if key == 'a' then
+	 players[1].toggleLeft = false
+      end
+      
+      if key == 'd' then
+	 players[1].toggleRight = false
+      end
+      
+      if #players < 2 then return end
+      
+      if key == 'left' then
+	 players[2].toggleLeft = false
+      end
+      
+      if key == 'right' then
+	 players[2].toggleRight = false
+      end
+      
+      if #players < 3 then return end
+   elseif gameMode == END then
    end
-   
-   if key == 'd' then
-      players[1].toggleRight = false
-   end
-
-   if #players < 2 then return end
-
-   if key == 'left' then
-      players[2].toggleLeft = false
-   end
-   
-   if key == 'right' then
-      players[2].toggleRight = false
-   end
-   
-   if #players < 3 then return end
 end
 
 function loadImages()
-   background = gr.newImage("images/purple.png")
-   ships[1] = {
-      ship = gr.newImage("images/playerShip3_green.png"),
-      shot = gr.newImage("images/laserGreen13.png")
+   background = {
+      gr.newImage("images/blue.png"),
+      gr.newImage("images/purple.png")
    }
-   
-   ships[2] = {
-      ship = gr.newImage("images/playerShip1_blue.png"),
-      shot = gr.newImage("images/laserBlue07.png")
+   ships = { 
+      {
+	 ship = gr.newImage("images/playerShip3_green.png"),
+	 shot = gr.newImage("images/laserGreen13.png"),
+	 r = math.random(360)
+      },
+      {
+	 ship = gr.newImage("images/playerShip1_blue.png"),
+	 shot = gr.newImage("images/laserBlue07.png"),
+	 r = math.random(360)
+      },
+      {
+	 ship = gr.newImage("images/playerShip2_orange.png"),
+	 shot = gr.newImage("images/laserRed07.png"),
+	 r = math.random(360)
+      },
+      {
+	 ship = gr.newImage("images/playerShip1_red.png"),
+	 shot = gr.newImage("images/laserRed07.png"),
+	 r = math.random(360)
+      }
    }
 
    lifebar = {
@@ -138,8 +182,34 @@ end
 function drawBackground()
    for x=0, gr.getWidth() / 256 do
       for y=0, gr.getHeight() / 256 do
-	 gr.draw(background, x * 256, y * 256)
+	 if gameMode == MENU then
+	    gr.draw(background[1], x * 256, y * 256)
+	 elseif gameMode == GAME then
+	    gr.draw(background[2], x * 256, y * 256)
+	 elseif gameMode == END then
+	 end
       end
+   end
+end
+
+function drawTitle()
+   gr.print("Little Big Spaceship", 
+	    200, 
+	    100,
+	    0,
+	    5,
+	    5)
+end
+
+function drawShips()
+   for i=1, #ships do
+      gr.push()
+      gr.translate(120 + (i * 150), 500)
+      gr.rotate(ships[i].r)
+      gr.draw(ships[i].ship,
+		 -ships[i].ship:getWidth() / 2,
+		 -ships[i].ship:getHeight() / 2)
+      gr.pop()
    end
 end
 
