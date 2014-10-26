@@ -7,10 +7,12 @@ function love.load()
    
    gameMode = MENU
    players = {}
-   ships = {}
+   powerUps = {}
 
    loadSounds()
    loadImages()
+
+   math.randomseed(os.time())
 end
 
 function love.update(dt)
@@ -23,6 +25,7 @@ function love.update(dt)
 	 updatePlayer(dt, players[i])
 	 updateShooting(dt, players[i])
       end
+      updatePowerUps(dt)
    elseif gameMode == END then
    end
 end
@@ -44,6 +47,7 @@ function love.draw()
       end
       
       drawLifebar()
+      drawPowerUps()
    elseif gameMode == END then
    end
 end
@@ -54,6 +58,8 @@ function love.keypressed(key)
 	 love.event.push('quit')
 	 return
       elseif key == "return" then
+	 players = {}
+	 powerUps = {}
 	 initPlayers()
 	 gameMode = GAME
 	 return
@@ -162,7 +168,6 @@ function loadSounds()
       laser = au.newSource("sounds/laser01.mp3"),
       hit = au.newSource("sounds/explosion3.mp3")
    }
-
 end
 
 function loadImages()
@@ -258,7 +263,7 @@ function loadImages()
       rotationSpeeds = {
 	 0,
 	 7.5,
-	 5.5,
+	 3.5,
 	 7.5
       },
       shootingSpeed = {
@@ -266,7 +271,8 @@ function loadImages()
 	 2,
 	 1,
 	 1
-      }
+      },
+      bulletSpeed = function() return 20 end
    }
 
    numbers = {}
@@ -274,106 +280,75 @@ function loadImages()
       numbers[i] = gr.newImage("images/ui/numeral" .. i .. ".png")
    end
    table.insert(numbers, gr.newImage("images/ui/numeralX.png"))
+
+   powerUpImages = {
+      speed = gr.newImage("images/bolt_gold.png")
+   }
 end
 
 function initPlayers()
-   players = {}
    if ships.orange.type ~= 1 then
-      table.insert(players, 
-		   {
-		      name = "Player 1",
-		      hp = 100,
-		      image = {
-			 ship = ships.orange.ship(),
-			 shot = ships.orange.shot(),
-			 lifebar = ships.orange.lifebar
-		      },
-		      x = 100,
-		      y = 100,
-		      a = 90,
-		      r = 25,
-		      speed = ships.orange.speed(),
-		      rotationSpeed = ships.orange.rotation(),
-		      shot = {
-			 rate = ships.orange.shooting(),
-			 time = 0,
-			 speed = 500,
-			 bullets = {}
-		      },
-		      controller = {
-			 left = 'left',
-			 right = 'right'
-		      },
-		      blink = false,
-		      blinkTimer = 0
-		   }
+      table.insert(players,
+		   initPlayer("Player 1", ships.orange, 'left', 'right')
       )
-      local i = #players
    end
-      
+   
    if ships.green.type ~= 1 then
-      table.insert(players, 
-		   {
-		      name = "Player 2",
-		      hp = 100,
-		      image = {
-			 ship = ships.green.ship(),
-			 shot = ships.green.shot(),
-			 lifebar = ships.green.lifebar
-		      },
-		      x = 924,
-		      y = 100,
-		      a = 180,
-		      r = 25,
-		      speed = ships.green.speed(),
-		      rotationSpeed = ships.green.rotation(),
-		      shot = {
-			 rate = ships.green.shooting(),
-			 time = 0,
-			 speed = 500,
-			 bullets = {}
-		      },
-		      controller = {
-			 left = 'a',
-			 right = 'd'
-		      }
-		   }
+      table.insert(players,
+		   initPlayer("Player 2", ships.green, 'a', 'd')
       )
-      local i = #players
    end
    
    if ships.blue.type ~= 1 then
-      table.insert(players, 
-		   {
-		      name = "Player 3",
-		      hp = 100,
-		      image = {
-			 ship = ships.blue.ship(),
-			 shot = ships.blue.shot(),
-			 lifebar = ships.blue.lifebar
-		      },
-		      x = 100,
-		      y = 668,
-		      a = 45,
-		      r = 25,
-		      speed = ships.blue.speed(),
-		      rotationSpeed = ships.blue.rotation(),
-		      shot = {
-			 rate = ships.blue.shooting(),
-			 time = 0,
-			 speed = 500,
-			 bullets = {}
-		      },
-		      controller = {
-			 left = 'j',
-			 altLeft = 'kp4',
-			 right = 'l',
-			 altRight = 'kp6'
-		      }
-		   }
+      table.insert(players,
+		   initPlayer("Player 3", ships.blue,
+			      'j', 'l',
+			      'kp4', 'kp6')
       )
-      local i = #players
    end
+end
+
+function initPlayer(name, ship, left, right, altLeft, altRight)
+   return {
+      name = name,
+      hp = 100,
+      image = {
+	 ship = ship.ship(),
+	 shot = ship.shot(),
+	 lifebar = ship.lifebar
+      },
+      x = 100,
+      y = 100,
+      a = 90,
+      r = 25,
+      speed = ship.speed(),
+      rotationSpeed = ship.rotation(),
+      shot = {
+	 rate = ship.shooting(),
+	 time = 0,
+	 speed = shipOptions.bulletSpeed(),
+	 bullets = {}
+      },
+      controller = {
+	 left = left,
+	 altLeft = altLeft,
+	 right = right,
+	 altRight = altRight
+      },
+      blink = {
+	 on = false,
+	 timer = 0,
+	 blink = false,
+	 duration = 0
+      },
+      powerUps = {
+	 speed = {
+	    timer = 0,
+	    duration = 2,
+	    on = false
+	 }
+      }
+   }
 end
 
 function drawBackground()
@@ -410,6 +385,23 @@ function drawShips()
 		 -ship:getHeight() / 2)
       gr.pop()
       i = i + 1
+   end
+end
+
+function drawPowerUps()
+   for k, v in pairs(powerUps) do
+      gr.push()
+      gr.translate(v.x, v.y)
+      gr.rotate(v.a)
+      gr.draw(v.image,
+	      -v.image:getWidth() / 2,
+	      -v.image:getHeight() / 2
+      )
+
+      if debug then
+	 gr.circle("line", 0, 0, v.r, 100)
+      end
+      gr.pop()
    end
 end
 
@@ -475,6 +467,9 @@ function drawPlayer(player)
    gr.push()
    gr.translate(player.x, player.y)
    gr.rotate(player.a)
+   if player.blink.blink then
+      gr.setColor(255, 255, 255, 0)
+   end
    gr.draw(image.ship,
 	      -image.ship:getWidth() / 4,
 	      -image.ship:getHeight() / 4,
@@ -482,6 +477,7 @@ function drawPlayer(player)
 	   .5,
 	   .5
    )
+   gr.setColor(255, 255, 255, 255)
    if debug then
       gr.circle("line", 0, 0, player.r, 100)
    end
@@ -490,13 +486,50 @@ end
 
 function updatePlayer(dt, player)
    -- movement
-   player.x = player.x + (math.sin(player.a) * dt * player.speed)
-   player.y = player.y + -(math.cos(player.a) * dt * player.speed)
+   local speed = player.speed
+   if player.powerUps.speed.on then
+      speed = speed * 2
+   end
+   
+   player.x = player.x + (math.sin(player.a) * dt * speed)
+   player.y = player.y + -(math.cos(player.a) * dt * speed)
    
    wrapScreen(player)
    
    for i=1, #player.shot.bullets do
-      updateShot(dt, player.shot.bullets[i], player.shot.speed)
+      updateShot(dt,
+		 player.shot.bullets[i])
+   end
+
+   -- blinking
+   if player.blink.on then
+      player.blink.timer = player.blink.timer + dt
+      player.blink.duration = player.blink.duration + dt
+      if player.blink.timer > .064 then
+	 player.blink.blink = true
+	 player.blink.timer = 0
+      else
+	 player.blink.blink = false
+      end
+
+      if player.blink.duration > .5 then
+	 player.blink.duration = 0
+	 player.blink.on = false
+	 player.blink.blink = false
+      end
+   end
+
+   -- rotation
+   if player.toggleLeft then
+      player.a = player.a - (dt * player.rotationSpeed)
+   end
+   
+   if player.toggleRight then
+      player.a = player.a + (dt * player.rotationSpeed)
+   end
+
+   if player.powerUps.speed.on then
+      updatePowerUp(dt, player.powerUps.speed)
    end
   
    -- check if dead
@@ -509,33 +542,35 @@ function updatePlayer(dt, player)
    player.shot.time = player.shot.time + dt
 
    if player.shot.time > player.shot.rate then
-      if #player.shot.bullets < 5 then
+      if #player.shot.bullets < 100 then
 	 table.insert(player.shot.bullets,
 		      { 
 			 x = player.x + (math.sin(player.a) * 40),
 			 y = player.y + -(math.cos(player.a) * 40),
 			 a = player.a,
 			 damage = 10,
-			 r = 15
+			 r = 15,
+			 speed = speed + player.shot.speed
 		      }
 	 )
 	 au.play(sounds.laser)
       end
       player.shot.time = player.shot.time - player.shot.rate
    end
-   -- rotation
-   if player.toggleLeft then
-      player.a = player.a - (dt * player.rotationSpeed)
-   end
+end
+
+function updatePowerUp(dt, up)
+   up.timer = up.timer + dt
    
-   if player.toggleRight then
-      player.a = player.a + (dt * player.rotationSpeed)
+   if up.timer > up.duration then
+      up.on = false
+      up.timer = 0
    end
 end
 
-function updateShot(dt, shot, speed)
-   shot.x = shot.x + (math.sin(shot.a) * dt * speed)
-   shot.y = shot.y + -(math.cos(shot.a) * dt * speed)
+function updateShot(dt, shot)
+   shot.x = shot.x + (math.sin(shot.a) * dt * shot.speed)
+   shot.y = shot.y + -(math.cos(shot.a) * dt * shot.speed)
 
    wrapScreen(shot)
 end
@@ -546,6 +581,7 @@ function updateShooting(dt, currentPlayer)
    
    for b=1, #currentPlayer.shot.bullets do
       local shot = currentPlayer.shot.bullets[b]
+      local surviving = true
       
       for p=1, #players do
 	 local player = players[p]
@@ -553,12 +589,15 @@ function updateShooting(dt, currentPlayer)
 	 
 	 if dist < player.r + (shot.r / 2) then
 	       player.hp = player.hp - shot.damage
-	       player.blink = true
+	       player.blink.on = true
 	       au.play(sounds.hit)
-	 else
-	    -- not really efficient at all!
-	    table.insert(survivingBullets, shot)
+	       surviving = false
 	 end
+      end
+      
+      if surviving then
+	 -- not really efficient at all!
+	 table.insert(survivingBullets, shot)
       end
    end
    
@@ -584,5 +623,34 @@ function wrapScreen(obj)
 
    if obj.y < 0 then
       obj.y = obj.y + gr.getHeight()
+   end
+end
+
+function updatePowerUps(dt)
+   if #powerUps == 0 then
+      table.insert(powerUps,
+		   {
+		      x = math.random(50, 974),
+		      y = math.random(50, 718),
+		      a = 0,
+		      r = 12,
+		      image = powerUpImages.speed
+		   }
+      )
+   end
+
+   for k,v in pairs(powerUps) do
+      v.a = v.a + dt
+
+      -- hit detection
+      for pk, pv in pairs(players) do
+	 local dist = dist(v.x, v.y, pv.x, pv.y)
+	 
+	 if dist < pv.r + (v.r / 2) then
+	    pv.powerUps.speed.timer = 0
+	    pv.powerUps.speed.on = true
+	    table.remove(powerUps, k)
+	 end
+      end
    end
 end
