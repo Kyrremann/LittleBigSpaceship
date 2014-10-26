@@ -59,36 +59,36 @@ function love.keypressed(key)
       if key == 'left' then
 	 ships.orange.type = ships.orange.type - 1
 	 if ships.orange.type <= 0 then
-	    ships.orange.type = 3
+	    ships.orange.type = 4
 	 end
       end
       if key == 'right' then
 	 ships.orange.type = ships.orange.type + 1
-	 if ships.orange.type >= 3 then
+	 if ships.orange.type >= 4 then
 	    ships.orange.type = 1
 	 end
       end
       if key == 'a' then
 	 ships.green.type = ships.green.type - 1
 	 if ships.green.type <= 0 then
-	    ships.green.type = 3
+	    ships.green.type = 4
 	 end
       end
       if key == 'd' then
 	 ships.green.type = ships.green.type + 1
-	 if ships.green.type >= 3 then
+	 if ships.green.type >= 4 then
 	    ships.green.type = 1
 	 end
       end
       if key == 'j' or key == 'kp4' then
 	 ships.blue.type = ships.blue.type - 1
 	 if ships.blue.type <= 0 then
-	    ships.blue.type = 3
+	    ships.blue.type = 4
 	 end
       end
       if key == 'l' or key == 'kp6' then
 	 ships.blue.type = ships.blue.type + 1
-	 if ships.blue.type >= 3 then
+	 if ships.blue.type >= 4 then
 	    ships.blue.type = 1
 	 end
       end
@@ -156,6 +156,7 @@ function loadImages()
    ships = { 
       green = {
 	 ship = {
+	    gr.newImage("images/ships/playerShip1_damage3.png"),
 	    gr.newImage("images/ships/playerShip1_green.png"),
 	    gr.newImage("images/ships/playerShip2_green.png"),
 	    gr.newImage("images/ships/playerShip3_green.png")
@@ -165,12 +166,15 @@ function loadImages()
 	 type = 1,
 	 lifebar = {
 	    image = gr.newImage("images/ui/playerLife3_green.png"),
-	    x = 10,
-	    y = 10
+	    textX = gr.getWidth() - 120,
+	    x = gr.getWidth() - 25,
+	    y = 25
 	 }
       },
+
       blue = {
 	 ship = {
+	    gr.newImage("images/ships/playerShip1_damage3.png"),
 	    gr.newImage("images/ships/playerShip1_blue.png"),
 	    gr.newImage("images/ships/playerShip2_blue.png"),
 	    gr.newImage("images/ships/playerShip3_blue.png")
@@ -180,23 +184,27 @@ function loadImages()
 	 type = 1,
 	 lifebar = {
 	    image = gr.newImage("images/ui/playerLife3_blue.png"),
-	    x = 0,
-	    y = 0
+	    textX = 25,
+	    x = 25,
+	    y = gr.getHeight() - 25
 	 }
       },
+
       orange = {
 	 ship = {
+	    gr.newImage("images/ships/playerShip1_damage3.png"),
 	    gr.newImage("images/ships/playerShip1_orange.png"),
 	    gr.newImage("images/ships/playerShip2_orange.png"),
 	    gr.newImage("images/ships/playerShip3_orange.png")
 	 },
 	 shot = gr.newImage("images/laserRed07.png"),
 	 r = math.random(360),
-	 type = 1,
+	 type = 2,
 	 lifebar = {
 	    image = gr.newImage("images/ui/playerLife3_orange.png"),
-	    x = 10,
-	    y = 10
+	    textX = 25,
+	    x = 25,
+	    y = 25
 	 }
       }
    }
@@ -209,28 +217,91 @@ function loadImages()
 end
 
 function initPlayers()
-   players[1] = {
-      name = "Player 1",
-      hp = 100,
-      image = ships.orange,
-      x = 100,
-      y = 100,
-      a = 90,
-      r = 25,
-      speed = 200,
-      rotationSpeed = 7.5,
-      shot = {
-	 rate = 1,
-	 time = 0,
-	 speed = 400,
-	 bullets = {}
-      },
-      controller = {
-	 left = 'left',
-	 right = 'right'
-      }
-   }
-   players[1].image.ship = players[1].image.ship[players[1].image.type]
+   if ships.orange.type ~= 1 then
+      table.insert(players, 
+		   {
+		      name = "Player 1",
+		      hp = 100,
+		      image = ships.orange,
+		      x = 100,
+		      y = 100,
+		      a = 90,
+		      r = 25,
+		      speed = 200,
+		      rotationSpeed = 7.5,
+		      shot = {
+			 rate = 1,
+			 time = 0,
+			 speed = 400,
+			 bullets = {}
+		      },
+		      controller = {
+			 left = 'left',
+			 right = 'right'
+		      }
+		   }
+      )
+      local i = #players
+      players[i].image.ship = players[i].image.ship[players[i].image.type]
+   end
+      
+   if ships.green.type ~= 1 then
+      table.insert(players, 
+		   {
+		      name = "Player 2",
+		      hp = 100,
+		      image = ships.green,
+		      x = 924,
+		      y = 100,
+		      a = 180,
+		      r = 25,
+		      speed = 200,
+		      rotationSpeed = 7.5,
+		      shot = {
+			 rate = 1,
+			 time = 0,
+			 speed = 400,
+			 bullets = {}
+		      },
+		      controller = {
+			 left = 'a',
+			 right = 'd'
+		      }
+		   }
+      )
+      local i = #players
+      players[i].image.ship = players[i].image.ship[players[i].image.type]
+   end
+   
+   if ships.blue.type ~= 1 then
+      table.insert(players, 
+		   {
+		      name = "Player 3",
+		      hp = 100,
+		      image = ships.blue,
+		      x = 100,
+		      y = 668,
+		      a = 45,
+		      r = 25,
+		      speed = 200,
+		      rotationSpeed = 7.5,
+		      shot = {
+			 rate = 1,
+			 time = 0,
+			 speed = 400,
+			 bullets = {}
+		      },
+		      controller = {
+			 left = 'j',
+			 altLeft = 'kp4',
+			 right = 'l',
+			 altRight = 'kp6'
+		      }
+		   }
+      )
+      local i = #players
+      players[i].image.ship = players[i].image.ship[players[i].image.type]
+   end
 end
 
 function drawBackground()
@@ -273,14 +344,24 @@ end
 function drawLifebar()
    for i=1, #players do
       local lifebar = players[i].image.lifebar
-      gr.draw(lifebar.image, lifebar.x, lifebar.y)
-      local hp = tostring(players[1].hp)
-      
+      local ship = players[i].image.ship
+      gr.push()
+      gr.translate(lifebar.x, lifebar.y)
+      gr.rotate(players[i].a)
+      gr.draw(ship,
+		 -ship:getWidth() / 8,
+		 -ship:getHeight() / 8,
+	      0,
+	      .25,
+	      .25)
+      gr.pop()
+
+      local hp = tostring(players[1].hp)      
       for i = 1, #hp do
 	 local n = tonumber(hp:sub(i,i))
 	 gr.draw(numbers[n],
-		 lifebar.image:getWidth() + ((lifebar.x + 5) * i),
-		 lifebar.y)
+		 lifebar.textX + (numbers[0]:getWidth() * i),
+		 lifebar.y - 10)
       end
    end
 end
