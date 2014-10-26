@@ -9,6 +9,7 @@ function love.load()
    players = {}
    ships = {}
 
+   loadSounds()
    loadImages()
 end
 
@@ -153,6 +154,14 @@ function love.keyreleased(key)
       end
    elseif gameMode == END then
    end
+end
+
+function loadSounds()
+   sounds = {
+      laser = au.newSource("sounds/laser01.mp3"),
+      hit = au.newSource("sounds/explosion3.mp3")
+   }
+
 end
 
 function loadImages()
@@ -476,6 +485,7 @@ function updatePlayer(dt, player)
 	 if dist < player.r + (shot.r / 2) then
 	    player.hp = player.hp - shot.damage
 	    player.blink = true
+	    au.play(sounds.hit)
 	 else
 	    -- not really efficient at all!
 	    table.insert(survivingBullets, shot)
@@ -498,6 +508,7 @@ function updatePlayer(dt, player)
 			 r = 15
 		      }
 	 )
+	 au.play(sounds.laser)
       end
       player.shot.time = player.shot.time - player.shot.rate
    end
