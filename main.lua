@@ -11,6 +11,11 @@ function love.load()
 
    loadSounds()
    loadImages()
+   
+   local fontUrl = "fonts/kenpixel_future_square.ttf"
+   fontMini = gr.newFont(fontUrl, 11)
+   fontSmall = gr.newFont(fontUrl, 22)
+   fontBig = gr.newFont(fontUrl, 48)
 
    math.randomseed(os.time())
 end
@@ -35,12 +40,13 @@ function love.draw()
    if gameMode == MENU then
       drawTitle()
       drawShips()
-      gr.print("Choose your limit",
-	       420,
-	       575,
-	       0,
-	       1.5,
-	       1.5)
+      gr.setFont(fontSmall)
+      gr.print("Choose your limit", 340, 575)
+      gr.setFont(fontMini)
+      gr.print("Ship #1: Limited fire rate", 340, 625)
+      gr.print("Ship #2: Limited turn rate", 340, 640)
+      gr.print("Ship #3: Limited speed", 340, 655)
+      gr.print("Ship #0: No play", 340, 670)
    elseif gameMode == GAME then
       for i=1, #players do
 	 drawPlayer(players[i])
@@ -282,33 +288,39 @@ function loadImages()
    table.insert(numbers, gr.newImage("images/ui/numeralX.png"))
 
    powerUpImages = {
-      speed = gr.newImage("images/bolt_gold.png")
+      speed = gr.newImage("images/bolt_gold.png"),
+      firerate = gr.newImage("images/things_gold.png")      
    }
 end
 
 function initPlayers()
    if ships.orange.type ~= 1 then
       table.insert(players,
-		   initPlayer("Player 1", ships.orange, 'left', 'right')
+		   initPlayer("Player 1", ships.orange,
+			      100, 100, 90,
+			      'left', 'right')
       )
    end
    
    if ships.green.type ~= 1 then
       table.insert(players,
-		   initPlayer("Player 2", ships.green, 'a', 'd')
+		   initPlayer("Player 2", ships.green,
+			      924, 100, 180,
+			      'a', 'd')
       )
    end
    
    if ships.blue.type ~= 1 then
       table.insert(players,
 		   initPlayer("Player 3", ships.blue,
+			      668, 100, 45,
 			      'j', 'l',
 			      'kp4', 'kp6')
       )
    end
 end
 
-function initPlayer(name, ship, left, right, altLeft, altRight)
+function initPlayer(name, ship, x, y, a, left, right, altLeft, altRight)
    return {
       name = name,
       hp = 100,
@@ -317,9 +329,9 @@ function initPlayer(name, ship, left, right, altLeft, altRight)
 	 shot = ship.shot(),
 	 lifebar = ship.lifebar
       },
-      x = 100,
-      y = 100,
-      a = 90,
+      x = x,
+      y = y,
+      a = a,
       r = 25,
       speed = ship.speed(),
       rotationSpeed = ship.rotation(),
@@ -346,6 +358,11 @@ function initPlayer(name, ship, left, right, altLeft, altRight)
 	    timer = 0,
 	    duration = 2,
 	    on = false
+	 },
+	 firerate = {
+	    timer = 0,
+	    duration = 2,
+	    on = false
 	 }
       }
    }
@@ -365,12 +382,10 @@ function drawBackground()
 end
 
 function drawTitle()
+   gr.setFont(fontBig)
    gr.print("Little Big Spaceship", 
-	    200, 
-	    100,
-	    0,
-	    5,
-	    5)
+	    100, 
+	    100)
 end
 
 function drawShips()
@@ -519,6 +534,20 @@ function updatePlayer(dt, player)
       end
    end
 
+   -- power ups
+   if player.powerUps.speed.on then
+      updatePowerUp(dt, player.powerUps.speed)
+   end
+   if player.powerUps.firerate.on then
+      updatePowerUp(dt, player.powerUps.firerate)
+   end
+
+   -- check if dead
+   if player.hp <= 0 then
+      player.image.ship = ships.orange.shipImages[1]
+      return
+   end
+
    -- rotation
    if player.toggleLeft then
       player.a = player.a - (dt * player.rotationSpeed)
@@ -528,20 +557,15 @@ function updatePlayer(dt, player)
       player.a = player.a + (dt * player.rotationSpeed)
    end
 
-   if player.powerUps.speed.on then
-      updatePowerUp(dt, player.powerUps.speed)
-   end
-  
-   -- check if dead
-   if player.hp <= 0 then
-      player.image.ship = ships.orange.shipImages[1]
-      return
-   end
-
    -- shooting
    player.shot.time = player.shot.time + dt
 
-   if player.shot.time > player.shot.rate then
+   local firerate = player.shot.rate
+   if player.powerUps.firerate.on then
+      firerate = firerate / 8
+   end
+
+   if player.shot.time > firerate then
       if #player.shot.bullets < 100 then
 	 table.insert(player.shot.bullets,
 		      { 
@@ -555,7 +579,7 @@ function updatePlayer(dt, player)
 	 )
 	 au.play(sounds.laser)
       end
-      player.shot.time = player.shot.time - player.shot.rate
+      player.shot.time = player.shot.time - firerate
    end
 end
 
@@ -628,15 +652,28 @@ end
 
 function updatePowerUps(dt)
    if #powerUps == 0 then
-      table.insert(powerUps,
-		   {
-		      x = math.random(50, 974),
-		      y = math.random(50, 718),
-		      a = 0,
-		      r = 12,
-		      image = powerUpImages.speed
-		   }
-      )
+      local switch = math.random(1, 2)
+      local up = {}
+      if switch == 1 then
+	 up = {
+	    x = math.random(50, 974),
+	    y = math.random(50, 718),
+	    a = 0,
+	    r = 12,
+	    image = powerUpImages.speed,
+	    type = 'speed'
+	 }
+      else
+	 up = {
+	    x = math.random(50, 974),
+	    y = math.random(50, 718),
+	    a = 0,
+	    r = 12,
+	    image = powerUpImages.firerate,
+	    type = 'firerate' 
+	 }
+      end
+      table.insert(powerUps, up)
    end
 
    for k,v in pairs(powerUps) do
@@ -647,9 +684,15 @@ function updatePowerUps(dt)
 	 local dist = dist(v.x, v.y, pv.x, pv.y)
 	 
 	 if dist < pv.r + (v.r / 2) then
-	    pv.powerUps.speed.timer = 0
-	    pv.powerUps.speed.on = true
-	    table.remove(powerUps, k)
+	    if v.type == 'speed' then
+	       pv.powerUps.speed.timer = 0
+	       pv.powerUps.speed.on = true
+	       table.remove(powerUps, k)
+	    elseif v.type == 'firerate' then
+	       pv.powerUps.firerate.timer = 0
+	       pv.powerUps.firerate.on = true
+	       table.remove(powerUps, k)
+	    end
 	 end
       end
    end
