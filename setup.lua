@@ -11,4 +11,4 @@ require "math"
 
 ke.setKeyRepeat(.01, .01)
 
-debug = true
+debug = false

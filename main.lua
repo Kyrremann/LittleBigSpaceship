@@ -21,6 +21,7 @@ function love.update(dt)
    elseif gameMode == GAME then
       for i=1, #players do
 	 updatePlayer(dt, players[i])
+	 updateShooting(dt, players[i])
       end
    elseif gameMode == END then
    end
@@ -169,9 +170,11 @@ function loadImages()
       gr.newImage("images/blue.png"),
       gr.newImage("images/purple.png")
    }
+
    ships = { 
       green = {
 	 ship = function() return ships.green.shipImages[ships.green.type] end,
+	 shot = function() return ships.green.shotImages[1] end,
 	 speed = function() return shipOptions.speeds[ships.green.type] end,
 	 rotation = function() return shipOptions.rotationSpeeds[ships.green.type] end,
 	 shooting = function() return shipOptions.shootingSpeed[ships.green.type] end,
@@ -181,7 +184,9 @@ function loadImages()
 	    gr.newImage("images/ships/playerShip2_green.png"),
 	    gr.newImage("images/ships/playerShip3_green.png")
 	 },
-	 shot = gr.newImage("images/laserGreen13.png"),
+	 shotImages = {
+	    gr.newImage("images/laserGreen13.png")
+	 },
 	 r = math.random(360),
 	 type = 1,
 	 lifebar = {
@@ -194,6 +199,7 @@ function loadImages()
 
       blue = {
 	 ship = function() return ships.blue.shipImages[ships.blue.type] end,
+	 shot = function() return ships.blue.shotImages[1] end,
 	 speed = function() return shipOptions.speeds[ships.blue.type] end,
 	 rotation = function() return shipOptions.rotationSpeeds[ships.blue.type] end,
 	 shooting = function() return shipOptions.shootingSpeed[ships.blue.type] end,
@@ -203,7 +209,9 @@ function loadImages()
 	    gr.newImage("images/ships/playerShip2_blue.png"),
 	    gr.newImage("images/ships/playerShip3_blue.png")
 	 },
-	 shot = gr.newImage("images/laserBlue07.png"),
+	 shotImages = {
+	    gr.newImage("images/laserBlue07.png")
+	 },
 	 r = math.random(360),
 	 type = 1,
 	 lifebar = {
@@ -216,6 +224,7 @@ function loadImages()
 
       orange = {
 	 ship = function() return ships.orange.shipImages[ships.orange.type] end,
+	 shot = function() return ships.orange.shotImages[1] end,
 	 speed = function() return shipOptions.speeds[ships.orange.type] end,
 	 rotation = function() return shipOptions.rotationSpeeds[ships.orange.type] end,
 	 shooting = function() return shipOptions.shootingSpeed[ships.orange.type] end,
@@ -225,7 +234,9 @@ function loadImages()
 	    gr.newImage("images/ships/playerShip2_orange.png"),
 	    gr.newImage("images/ships/playerShip3_orange.png")
 	 },
-	 shot = gr.newImage("images/laserRed07.png"),
+	 shotImages = {
+	    gr.newImage("images/laserRed07.png")
+	 },
 	 r = math.random(360),
 	 type = 2,
 	 lifebar = {
@@ -236,6 +247,7 @@ function loadImages()
 	 }
       }
    }
+
    shipOptions = {
       speeds = {
 	 10,
@@ -271,7 +283,11 @@ function initPlayers()
 		   {
 		      name = "Player 1",
 		      hp = 100,
-		      image = ships.orange,
+		      image = {
+			 ship = ships.orange.ship(),
+			 shot = ships.orange.shot(),
+			 lifebar = ships.orange.lifebar
+		      },
 		      x = 100,
 		      y = 100,
 		      a = 90,
@@ -300,7 +316,11 @@ function initPlayers()
 		   {
 		      name = "Player 2",
 		      hp = 100,
-		      image = ships.green,
+		      image = {
+			 ship = ships.green.ship(),
+			 shot = ships.green.shot(),
+			 lifebar = ships.green.lifebar
+		      },
 		      x = 924,
 		      y = 100,
 		      a = 180,
@@ -327,7 +347,11 @@ function initPlayers()
 		   {
 		      name = "Player 3",
 		      hp = 100,
-		      image = ships.blue,
+		      image = {
+			 ship = ships.blue.ship(),
+			 shot = ships.blue.shot(),
+			 lifebar = ships.blue.lifebar
+		      },
 		      x = 100,
 		      y = 668,
 		      a = 45,
@@ -392,7 +416,7 @@ end
 function drawLifebar()
    for i=1, #players do
       local lifebar = players[i].image.lifebar
-      local ship = players[i].image.ship()
+      local ship = players[i].image.ship
       gr.push()
       gr.translate(lifebar.x, lifebar.y)
       gr.rotate(players[i].a)
@@ -403,13 +427,25 @@ function drawLifebar()
 	      .25,
 	      .25)
       gr.pop()
-
-      local hp = tostring(players[1].hp)      
-      for i = 1, #hp do
-	 local n = tonumber(hp:sub(i,i))
-	 gr.draw(numbers[n],
-		 lifebar.textX + (numbers[0]:getWidth() * i),
-		 lifebar.y - 10)
+      
+      if players[i].hp > 0 then
+	 local hp = tostring(players[i].hp)
+	 while #hp < 3 do 
+	    hp = "0" .. hp
+	 end
+	 
+	 for j=1, #hp do
+	    local n = tonumber(hp:sub(j, j))
+	    gr.draw(numbers[n],
+		    lifebar.textX + (numbers[0]:getWidth() * j),
+		    lifebar.y - 10)
+	 end
+      else
+	 for j=1, 3 do
+	    gr.draw(numbers[10],
+		    lifebar.textX + (numbers[0]:getWidth() * j),
+		    lifebar.y - 10)
+	 end
       end
    end
 end
@@ -439,9 +475,9 @@ function drawPlayer(player)
    gr.push()
    gr.translate(player.x, player.y)
    gr.rotate(player.a)
-   gr.draw(image.ship(),
-	      -image.ship():getWidth() / 4,
-	      -image.ship():getHeight() / 4,
+   gr.draw(image.ship,
+	      -image.ship:getWidth() / 4,
+	      -image.ship:getHeight() / 4,
 	   0,
 	   .5,
 	   .5
@@ -453,15 +489,6 @@ function drawPlayer(player)
 end
 
 function updatePlayer(dt, player)
-   -- rotation
-   if player.toggleLeft then
-      player.a = player.a - (dt * player.rotationSpeed)
-   end
-   
-   if player.toggleRight then
-      player.a = player.a + (dt * player.rotationSpeed)
-   end
-
    -- movement
    player.x = player.x + (math.sin(player.a) * dt * player.speed)
    player.y = player.y + -(math.cos(player.a) * dt * player.speed)
@@ -471,29 +498,13 @@ function updatePlayer(dt, player)
    for i=1, #player.shot.bullets do
       updateShot(dt, player.shot.bullets[i], player.shot.speed)
    end
-
-   -- hit detection
-   for p=1, #players do
-      local player = players[p]
-      local survivingBullets = {}
-      local counter = 1
-
-      for i=1, #player.shot.bullets do
-	 local shot = player.shot.bullets[i]
-	 local dist = dist(player.x, player.y, shot.x, shot.y)
-	 
-	 if dist < player.r + (shot.r / 2) then
-	    player.hp = player.hp - shot.damage
-	    player.blink = true
-	    au.play(sounds.hit)
-	 else
-	    -- not really efficient at all!
-	    table.insert(survivingBullets, shot)
-	 end
-      end
-      player.shot.bullets = survivingBullets
+  
+   -- check if dead
+   if player.hp <= 0 then
+      player.image.ship = ships.orange.shipImages[1]
+      return
    end
-   
+
    -- shooting
    player.shot.time = player.shot.time + dt
 
@@ -512,6 +523,14 @@ function updatePlayer(dt, player)
       end
       player.shot.time = player.shot.time - player.shot.rate
    end
+   -- rotation
+   if player.toggleLeft then
+      player.a = player.a - (dt * player.rotationSpeed)
+   end
+   
+   if player.toggleRight then
+      player.a = player.a + (dt * player.rotationSpeed)
+   end
 end
 
 function updateShot(dt, shot, speed)
@@ -519,6 +538,31 @@ function updateShot(dt, shot, speed)
    shot.y = shot.y + -(math.cos(shot.a) * dt * speed)
 
    wrapScreen(shot)
+end
+
+-- hit detection
+function updateShooting(dt, currentPlayer)
+   local survivingBullets = {}
+   
+   for b=1, #currentPlayer.shot.bullets do
+      local shot = currentPlayer.shot.bullets[b]
+      
+      for p=1, #players do
+	 local player = players[p]
+	 local dist = dist(player.x, player.y, shot.x, shot.y)
+	 
+	 if dist < player.r + (shot.r / 2) then
+	       player.hp = player.hp - shot.damage
+	       player.blink = true
+	       au.play(sounds.hit)
+	 else
+	    -- not really efficient at all!
+	    table.insert(survivingBullets, shot)
+	 end
+      end
+   end
+   
+   currentPlayer.shot.bullets = survivingBullets
 end
 
 function dist(x1,y1, x2,y2)
