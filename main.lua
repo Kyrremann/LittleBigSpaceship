@@ -10,53 +10,12 @@ function love.load()
    ships = {}
 
    loadImages()
-
-   players[1] = {
-      name = "Player 1",
-      hp = 100,
-      image = nil,
-      x = 100,
-      y = 100,
-      a = 90,
-      r = 25,
-      speed = 200,
-      rotationSpeed = 7.5,
-      shot = {
-	 rate = 1,
-	 time = 0,
-	 speed = 400,
-	 bullets = {}
-      }
-   }
-   players[1].image = ships[1]
---[[   
-   players[2] = {
-      name = "Player 1",
-      hp = 100,
-      image = nil,
-      x = 924,
-      y = 668,
-      a = -45,
-      r = 25,
-      speed = 500,
-      rotationSpeed = 7.5,
-      shot = {
-	 rate = 1,
-	 time = 0,
-	 damage = 10,
-	 speed = 800,
-	 r = 15,
-	 bullets = {}
-      }
-   }
-   players[2].image = ships[2]
-]]
 end
 
 function love.update(dt)
    if gameMode == MENU then
-      for i=1, #ships do
-	 ships[i].r = ships[i].r + (dt * 1)
+      for k, v in pairs(ships) do
+	 v.r = v.r + (dt * 1)
       end
    elseif gameMode == GAME then
       for i=1, #players do
@@ -71,6 +30,12 @@ function love.draw()
    if gameMode == MENU then
       drawTitle()
       drawShips()
+      gr.print("Choose your limit",
+	       420,
+	       575,
+	       0,
+	       1.5,
+	       1.5)
    elseif gameMode == GAME then
       for i=1, #players do
 	 drawPlayer(players[i])
@@ -85,31 +50,73 @@ function love.keypressed(key)
    if gameMode == MENU then
       if key == "escape" then
 	 love.event.push('quit')
+	 return
+      elseif key == "return" then
+	 initPlayers()
+	 gameMode = GAME
+	 return
+      end   
+      if key == 'left' then
+	 ships.orange.type = ships.orange.type - 1
+	 if ships.orange.type <= 0 then
+	    ships.orange.type = 3
+	 end
+      end
+      if key == 'right' then
+	 ships.orange.type = ships.orange.type + 1
+	 if ships.orange.type >= 3 then
+	    ships.orange.type = 1
+	 end
+      end
+      if key == 'a' then
+	 ships.green.type = ships.green.type - 1
+	 if ships.green.type <= 0 then
+	    ships.green.type = 3
+	 end
+      end
+      if key == 'd' then
+	 ships.green.type = ships.green.type + 1
+	 if ships.green.type >= 3 then
+	    ships.green.type = 1
+	 end
+      end
+      if key == 'j' or key == 'kp4' then
+	 ships.blue.type = ships.blue.type - 1
+	 if ships.blue.type <= 0 then
+	    ships.blue.type = 3
+	 end
+      end
+      if key == 'l' or key == 'kp6' then
+	 ships.blue.type = ships.blue.type + 1
+	 if ships.blue.type >= 3 then
+	    ships.blue.type = 1
+	 end
       end
    elseif gameMode == GAME then
       if key == "escape" then
 	 gameMode = MENU
+	 return
       end
-      
-      if key == 'a' then
+      if key == 'left' then
 	 players[1].toggleLeft = true
       end
-      
-      if key == 'd' then
+      if key == 'right' then
 	 players[1].toggleRight = true
       end
-      
       if #players < 2 then return end
-      
-      if key == 'left' then
+      if key == 'a' then
 	 players[2].toggleLeft = true
       end
-      
-      if key == 'right' then
+      if key == 'd' then
 	 players[2].toggleRight = true
       end
-      
       if #players < 3 then return end
+      if key == 'j' or key == 'kp4' then
+	 players[3].toggleLeft = true
+      end
+      if key == 'l' or key == 'kp6' then
+	 players[3].toggleRight = true
+      end
    elseif gameMode == END then
    end
 end
@@ -117,25 +124,26 @@ end
 function love.keyreleased(key)
    if gameMode == MENU then
    elseif gameMode == GAME then
-      if key == 'a' then
+      if key == 'left' then
 	 players[1].toggleLeft = false
-      end
-      
-      if key == 'd' then
+      end      
+      if key == 'right' then
 	 players[1].toggleRight = false
       end
-      
       if #players < 2 then return end
-      
-      if key == 'left' then
+      if key == 'a' then
 	 players[2].toggleLeft = false
       end
-      
-      if key == 'right' then
+      if key == 'd' then
 	 players[2].toggleRight = false
       end
-      
       if #players < 3 then return end
+      if key == 'j' or key == 'kp4' then
+	 players[3].toggleLeft = false
+      end
+      if key == 'l' or key == 'kp6' then
+	 players[3].toggleRight = false
+      end
    elseif gameMode == END then
    end
 end
@@ -146,30 +154,51 @@ function loadImages()
       gr.newImage("images/purple.png")
    }
    ships = { 
-      {
-	 ship = gr.newImage("images/playerShip3_green.png"),
+      green = {
+	 ship = {
+	    gr.newImage("images/ships/playerShip1_green.png"),
+	    gr.newImage("images/ships/playerShip2_green.png"),
+	    gr.newImage("images/ships/playerShip3_green.png")
+	 },
 	 shot = gr.newImage("images/laserGreen13.png"),
-	 r = math.random(360)
+	 r = math.random(360),
+	 type = 1,
+	 lifebar = {
+	    image = gr.newImage("images/ui/playerLife3_green.png"),
+	    x = 10,
+	    y = 10
+	 }
       },
-      {
-	 ship = gr.newImage("images/playerShip1_blue.png"),
+      blue = {
+	 ship = {
+	    gr.newImage("images/ships/playerShip1_blue.png"),
+	    gr.newImage("images/ships/playerShip2_blue.png"),
+	    gr.newImage("images/ships/playerShip3_blue.png")
+	 },
 	 shot = gr.newImage("images/laserBlue07.png"),
-	 r = math.random(360)
+	 r = math.random(360),
+	 type = 1,
+	 lifebar = {
+	    image = gr.newImage("images/ui/playerLife3_blue.png"),
+	    x = 0,
+	    y = 0
+	 }
       },
-      {
-	 ship = gr.newImage("images/playerShip2_orange.png"),
+      orange = {
+	 ship = {
+	    gr.newImage("images/ships/playerShip1_orange.png"),
+	    gr.newImage("images/ships/playerShip2_orange.png"),
+	    gr.newImage("images/ships/playerShip3_orange.png")
+	 },
 	 shot = gr.newImage("images/laserRed07.png"),
-	 r = math.random(360)
-      },
-      {
-	 ship = gr.newImage("images/playerShip1_red.png"),
-	 shot = gr.newImage("images/laserRed07.png"),
-	 r = math.random(360)
+	 r = math.random(360),
+	 type = 1,
+	 lifebar = {
+	    image = gr.newImage("images/ui/playerLife3_orange.png"),
+	    x = 10,
+	    y = 10
+	 }
       }
-   }
-
-   lifebar = {
-      green = gr.newImage("images/ui/playerLife3_green.png")
    }
 
    numbers = {}
@@ -177,6 +206,31 @@ function loadImages()
       numbers[i] = gr.newImage("images/ui/numeral" .. i .. ".png")
    end
    table.insert(numbers, gr.newImage("images/ui/numeralX.png"))
+end
+
+function initPlayers()
+   players[1] = {
+      name = "Player 1",
+      hp = 100,
+      image = ships.orange,
+      x = 100,
+      y = 100,
+      a = 90,
+      r = 25,
+      speed = 200,
+      rotationSpeed = 7.5,
+      shot = {
+	 rate = 1,
+	 time = 0,
+	 speed = 400,
+	 bullets = {}
+      },
+      controller = {
+	 left = 'left',
+	 right = 'right'
+      }
+   }
+   players[1].image.ship = players[1].image.ship[players[1].image.type]
 end
 
 function drawBackground()
@@ -202,26 +256,32 @@ function drawTitle()
 end
 
 function drawShips()
-   for i=1, #ships do
+   local i = 1
+   for k, v in pairs(ships) do
+      local ship = v.ship[v.type]
       gr.push()
-      gr.translate(120 + (i * 150), 500)
-      gr.rotate(ships[i].r)
-      gr.draw(ships[i].ship,
-		 -ships[i].ship:getWidth() / 2,
-		 -ships[i].ship:getHeight() / 2)
+      gr.translate(200 + (i * 150), 500)
+      gr.rotate(v.r)
+      gr.draw(ship,
+		 -ship:getWidth() / 2,
+		 -ship:getHeight() / 2)
       gr.pop()
+      i = i + 1
    end
 end
 
 function drawLifebar()
-   gr.draw(lifebar.green, 10, 10)
-   local hp = tostring(players[1].hp)
-   
-   for i = 1, #hp do
-      local n = tonumber(hp:sub(i,i))
-      gr.draw(numbers[n],
-	      lifebar.green:getWidth() + (15 * i),
-	      10)
+   for i=1, #players do
+      local lifebar = players[i].image.lifebar
+      gr.draw(lifebar.image, lifebar.x, lifebar.y)
+      local hp = tostring(players[1].hp)
+      
+      for i = 1, #hp do
+	 local n = tonumber(hp:sub(i,i))
+	 gr.draw(numbers[n],
+		 lifebar.image:getWidth() + ((lifebar.x + 5) * i),
+		 lifebar.y)
+      end
    end
 end
 
