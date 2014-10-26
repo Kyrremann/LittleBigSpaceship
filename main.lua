@@ -41,12 +41,17 @@ function love.draw()
       drawTitle()
       drawShips()
       gr.setFont(fontSmall)
-      gr.print("Choose your limit", 340, 575)
+      gr.printf("Choose your limit",
+		0, 575, gr.getWidth(), "center")
       gr.setFont(fontMini)
-      gr.print("Ship #1: Limited fire rate", 340, 625)
-      gr.print("Ship #2: Limited turn rate", 340, 640)
-      gr.print("Ship #3: Limited speed", 340, 655)
-      gr.print("Ship #0: No play", 340, 670)
+      gr.printf("Ship #1: Limited fire rate",
+		0, 625, gr.getWidth(), "center")
+      gr.printf("Ship #2: Limited turn rate",
+		0, 640, gr.getWidth(), "center")
+      gr.printf("Ship #3: Limited speed",
+		0, 655, gr.getWidth(), "center")
+      gr.printf("Ship #0: No play",
+		0, 670, gr.getWidth(), "center")
    elseif gameMode == GAME then
       for i=1, #players do
 	 drawPlayer(players[i])
@@ -113,6 +118,13 @@ function love.keypressed(key)
    elseif gameMode == GAME then
       if key == "escape" then
 	 gameMode = MENU
+	 for i=1, #players do
+	    local p = players[i]
+	    print(p.name)
+	    print("Shots fired", p.stats.shotsFired)
+	    print("Players hit", p.stats.playersHit)
+	    print("Power ups", p.stats.powerUps)
+	 end
 	 return
       elseif key == 'f9' then
 	 debug = not debug
@@ -294,10 +306,13 @@ function loadImages()
 end
 
 function initPlayers()
+   local w10 = gr.getWidth() / 10
+   local h10 = gr.getHeight() / 10
+   
    if ships.orange.type ~= 1 then
       table.insert(players,
 		   initPlayer("Player 1", ships.orange,
-			      100, 100, 90,
+			      w10, h10, 90,
 			      'left', 'right')
       )
    end
@@ -305,7 +320,7 @@ function initPlayers()
    if ships.green.type ~= 1 then
       table.insert(players,
 		   initPlayer("Player 2", ships.green,
-			      924, 100, 180,
+			      w10, gr.getHeight() - h10, 180,
 			      'a', 'd')
       )
    end
@@ -313,7 +328,7 @@ function initPlayers()
    if ships.blue.type ~= 1 then
       table.insert(players,
 		   initPlayer("Player 3", ships.blue,
-			      668, 100, 45,
+			      gr.getWidth() - w10, h10, 45,
 			      'j', 'l',
 			      'kp4', 'kp6')
       )
@@ -364,6 +379,11 @@ function initPlayer(name, ship, x, y, a, left, right, altLeft, altRight)
 	    duration = 2,
 	    on = false
 	 }
+      },
+      stats = {
+	 shotsFired = 0,
+	 playersHit = 0,
+	 powerUps = 0
       }
    }
 end
@@ -383,17 +403,17 @@ end
 
 function drawTitle()
    gr.setFont(fontBig)
-   gr.print("Little Big Spaceship", 
-	    100, 
-	    100)
+   gr.printf("Little Big Spaceship", 
+	     0, gr.getHeight() / 10, gr.getWidth(), "center")
 end
 
 function drawShips()
    local i = 1
+   local w10 = gr.getWidth() / 10
    for k, v in pairs(ships) do
       local ship = v.ship()
       gr.push()
-      gr.translate(200 + (i * 150), 500)
+      gr.translate((w10 * 3) + (i * w10), 500)
       gr.rotate(v.r)
       gr.draw(ship,
 		 -ship:getWidth() / 2,
@@ -578,6 +598,7 @@ function updatePlayer(dt, player)
 		      }
 	 )
 	 au.play(sounds.laser)
+	 player.stats.shotsFired = player.stats.shotsFired + 1
       end
       player.shot.time = player.shot.time - firerate
    end
@@ -624,7 +645,9 @@ function updateShooting(dt, currentPlayer)
 	 table.insert(survivingBullets, shot)
       end
    end
-   
+
+   currentPlayer.stats.playersHit = currentPlayer.stats.playersHit 
+      + math.abs(#survivingBullets - #currentPlayer.shot.bullets)
    currentPlayer.shot.bullets = survivingBullets
 end
 
@@ -654,10 +677,12 @@ function updatePowerUps(dt)
    if #powerUps == 0 then
       local switch = math.random(1, 2)
       local up = {}
+      local w10 = gr.getWidth() / 10
+      local h10 = gr.getHeight() / 10
       if switch == 1 then
 	 up = {
-	    x = math.random(50, 974),
-	    y = math.random(50, 718),
+	    x = math.random(w10, gr.getWidth() - w10),
+	    y = math.random(h10, gr.getHeight() - h10),
 	    a = 0,
 	    r = 12,
 	    image = powerUpImages.speed,
@@ -665,8 +690,8 @@ function updatePowerUps(dt)
 	 }
       else
 	 up = {
-	    x = math.random(50, 974),
-	    y = math.random(50, 718),
+	    x = math.random(w10, gr.getWidth() - w10),
+	    y = math.random(h10, gr.getHeight() - h10),
 	    a = 0,
 	    r = 12,
 	    image = powerUpImages.firerate,
@@ -693,6 +718,7 @@ function updatePowerUps(dt)
 	       pv.powerUps.firerate.on = true
 	       table.remove(powerUps, k)
 	    end
+	    pv.stats.powerUps = pv.stats.powerUps + 1
 	 end
       end
    end
