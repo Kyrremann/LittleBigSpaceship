@@ -12,5 +12,7 @@ Good luck!
 Controllers
 ===========
 Green ship: left = a, right = d
+
 Orange ship: left = left, right = right
+
 Blue ship: left = j (or kp4), right = l (or kp9)
