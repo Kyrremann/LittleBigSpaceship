@@ -31,6 +31,7 @@ function love.update(dt)
 	 updateShooting(dt, players[i])
       end
       updatePowerUps(dt)
+      checkIfAllAreDead()
    elseif gameMode == END then
    end
 end
@@ -40,18 +41,7 @@ function love.draw()
    if gameMode == MENU then
       drawTitle()
       drawShips()
-      gr.setFont(fontSmall)
-      gr.printf("Choose your limit",
-		0, 575, gr.getWidth(), "center")
-      gr.setFont(fontMini)
-      gr.printf("Ship #1: Limited fire rate",
-		0, 625, gr.getWidth(), "center")
-      gr.printf("Ship #2: Limited turn rate",
-		0, 640, gr.getWidth(), "center")
-      gr.printf("Ship #3: Limited speed",
-		0, 655, gr.getWidth(), "center")
-      gr.printf("Ship #0: No play",
-		0, 670, gr.getWidth(), "center")
+      drawLimitHelp()
    elseif gameMode == GAME then
       for i=1, #players do
 	 drawPlayer(players[i])
@@ -60,6 +50,7 @@ function love.draw()
       drawLifebar()
       drawPowerUps()
    elseif gameMode == END then
+      drawStats()
    end
 end
 
@@ -117,7 +108,7 @@ function love.keypressed(key)
 
    elseif gameMode == GAME then
       if key == "escape" then
-	 gameMode = MENU
+	 gameMode = END
 	 for i=1, #players do
 	    local p = players[i]
 	    print(p.name)
@@ -151,6 +142,9 @@ function love.keypressed(key)
 	 players[3].toggleRight = true
       end
    elseif gameMode == END then
+      if key == 'escape' or key == 'return' then
+	 gameMode = MENU
+      end
    end
 end
 
@@ -721,5 +715,47 @@ function updatePowerUps(dt)
 	    pv.stats.powerUps = pv.stats.powerUps + 1
 	 end
       end
+   end
+end
+
+function drawLimitHelp()
+   gr.setFont(fontSmall)
+   gr.printf("Choose your limit",
+	     0, 575, gr.getWidth(), "center")
+   gr.setFont(fontMini)
+   gr.printf("Ship #1: Limited fire rate",
+	     0, 625, gr.getWidth(), "center")
+   gr.printf("Ship #2: Limited turn rate",
+	     0, 640, gr.getWidth(), "center")
+   gr.printf("Ship #3: Limited speed",
+	     0, 655, gr.getWidth(), "center")
+   gr.printf("Ship #0: No play",
+	     0, 670, gr.getWidth(), "center")
+end
+
+function drawStats()
+   gr.print("Name: ", 100, 100)
+   gr.print("Shots fired: ", 100, 125)
+   gr.print("Players hit: ", 100, 150)
+   gr.print("Power ups: ", 100, 175)
+   for i=1, #players do
+      local p = players[i]
+      gr.print(p.name, 160 + (100 * i), 100)
+      gr.print(p.stats.shotsFired, 200 + (100 * i), 125)
+      gr.print(p.stats.playersHit, 200 + (100 * i), 150)
+      gr.print(p.stats.powerUps, 200 + (100 * i), 175)
+   end
+end
+
+function checkIfAllAreDead()
+   local endOfGame = true
+   for i=1, #players do
+      if players[i].hp > 0 then
+	 endOfGame = false
+      end
+   end
+
+   if endOfGame then
+      gameMode = END
    end
 end
