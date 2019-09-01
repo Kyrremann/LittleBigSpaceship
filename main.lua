@@ -177,8 +177,8 @@ end
 
 function loadSounds()
    sounds = {
-      laser = au.newSource("sounds/laser01.mp3"),
-      hit = au.newSource("sounds/explosion3.mp3")
+      laser = au.newSource("sounds/laser01.mp3", "static"),
+      hit = au.newSource("sounds/explosion3.mp3", "static")
    }
 end
 

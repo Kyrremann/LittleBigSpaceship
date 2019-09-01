@@ -9,6 +9,6 @@ au = love.audio
 
 require "math"
 
-ke.setKeyRepeat(.01, .01)
+ke.setKeyRepeat(true)
 
 debug = false
